@@ -1,0 +1,141 @@
+package com.myfirst.wsServer;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+
+import javax.xml.ws.Endpoint;
+
+import siUtils.siDBConnection;
+
+public class RunService {
+	
+	static String sScieraHome="";
+	static Connection conn =null;
+	 
+
+	
+	 public static void main(String[] args) {
+	         
+    String data="";
+    
+    if (args.length >= 1) 
+	{
+		sScieraHome = args[0];
+		// To Call Constructor 
+	} 
+	else 
+	{
+		System.out.println("Enter Sciera-Home path as argument");
+		System.exit(-1);
+	}
+	
+	try
+	{
+	siDBConnection iConnection;
+	iConnection = new siDBConnection(sScieraHome);
+	iConnection.connect();
+	conn = iConnection.getConnection();
+	}catch(Exception e)
+	{
+		
+	}
+	  System.out.println("SayHello Web Service started.");
+	  Endpoint.publish("http://localhost:8080/wsServerExample", new SayHello());
+	 
+	  try {
+		Process p = Runtime.getRuntime().exec("D:\\xampp\\php\\php.exe C:/Users/sudharsan/Desktop/prabhu/soapdemo.php soapdemo.php");
+		
+		   p.waitFor();
+
+	        String line;
+
+	        BufferedReader error = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+	        while((line = error.readLine()) != null){
+	            System.out.println(line);
+	        }
+	        error.close();
+
+	        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+	        while((line=input.readLine()) != null)
+	        {
+	        	data+=line ;
+
+	        }
+	        
+	        String Name  =  extractvalues(data,"[return] =>",")", 1).trim().replaceAll("Hello", "");
+	        
+	        
+	        System.out.println("Name----"+Name);
+	        
+	    Data_Moved_To_table(conn, Name);
+	        
+	} catch (Exception e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	  
+	 }
+	 
+	 private static void Data_Moved_To_table(Connection conn, String Name) {
+			// TODO Auto-generated method stub
+	 
+		try
+		{
+	   
+			PreparedStatement Insert_Script_value = conn.prepareStatement("INSERT INTO  sudhan_demo (User,Password,First_Name,Last_Name,Email) VALUES(?,?,?,?,?)");
+			  
+			Insert_Script_value.setString(1,Name);
+			Insert_Script_value.setString(2, "Pswd_"+Name);
+			Insert_Script_value.setString(3, "First_"+Name);
+			Insert_Script_value.setString(4, "Last_"+Name);
+			Insert_Script_value.setString(5, Name+"@sciera.com");
+ 
+			
+			Insert_Script_value.executeUpdate();
+		 
+			System.out.println("data Update sucessfully-----------");
+	 
+		} catch (Exception e) {
+			System.out.println("Exception .." + e);
+		}
+	}
+	 
+		public static String extractvalues(String Details, String Leftboundary, String Rightboundary, int Count)
+
+		{
+			String[] returntext = new String[999999];
+			String returnstring = "";
+			try {
+				returntext = getstringbettags(Details, Leftboundary, Rightboundary, Count);
+				returnstring = returntext[0];
+			} catch (Exception e) {
+
+			}
+			return returnstring;
+
+		}
+
+		public static String[] getstringbettags(String text, String start, String end, int cou) {
+			String[] returntext = new String[99999];
+			int startindx = 0;
+			for (int j = 0; j <= cou; j++) {
+				startindx = text.indexOf(start, startindx);
+				returntext[j] = "";
+				if (startindx != -1) {
+					text = text.substring(startindx + start.length());
+					startindx = start.length();
+					int endindx = text.indexOf(end);
+					if (endindx != -1) {
+						String temp = text.substring(0, endindx);
+						returntext[j] = temp;
+						startindx += start.length();
+					}
+					// System.out.println(text);
+				}
+			}
+			return returntext;
+		}
+ }
